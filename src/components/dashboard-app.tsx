@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PerfectPanelIntegration } from "@/components/perfect-panel-integration";
 import { useMemo, useState } from "react";
 import {
   LayoutDashboard,
@@ -569,7 +570,7 @@ export function DashboardApp({ section }: { section: string }) {
             className="help-link"
             onClick={() =>
               setNotice(
-                "Phase 1 is an offline demo. See README for setup and data definitions.",
+                "Live API access is blocked pending documentation verification. See Settings for the capability report.",
               )
             }
           >
@@ -644,7 +645,7 @@ export function DashboardApp({ section }: { section: string }) {
               profits are simulated.
             </span>
             <span className="phase-tag">
-              Phase 1 <span>•</span> No live connections
+              Phase 2 <span>•</span> Live data unavailable
             </span>
           </div>
           <div className="page-heading">
@@ -669,6 +670,9 @@ export function DashboardApp({ section }: { section: string }) {
               Export demo data
             </Button>
           </div>
+          {["Dashboard", "Settings"].includes(section) && (
+            <PerfectPanelIntegration />
+          )}
           {section !== "Settings" && filters}
           {notice && (
             <div className="notice" role="status">
@@ -1509,46 +1513,36 @@ export function DashboardApp({ section }: { section: string }) {
                   <Button type="submit">Save demo preferences</Button>
                 </form>
               </Card>
-              <div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Integration status</CardTitle>
-                    <Badge tone="pending">Not connected</Badge>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="integration-symbol">
-                      <Layers size={27} />
-                    </div>
-                    <h3>Perfect Panel</h3>
-                    <p className="muted">
-                      Phase 1 uses an isolated mock data layer. No provider or
-                      Perfect Panel APIs are connected.
-                    </p>
-                    <div className="safety-list">
-                      <span>
-                        <Check size={15} />
-                        No API keys required
-                      </span>
-                      <span>
-                        <Check size={15} />
-                        No orders can be created
-                      </span>
-                      <span>
-                        <Check size={15} />
-                        No payments or service testing
-                      </span>
-                      <span>
-                        <Check size={15} />
-                        Existing website is untouched
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-                <p className="settings-note">
-                  This is a separate admin application. Authentication and
-                  production integrations are outside Phase 1.
-                </p>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Live data boundaries</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="muted">
+                    Orders, services, customers and payments are unavailable
+                    until official endpoint schemas and access controls are
+                    verified. No live and demo figures are combined.
+                  </p>
+                  <div className="safety-list">
+                    <span>
+                      <Check size={15} />
+                      No credentials in the browser
+                    </span>
+                    <span>
+                      <Check size={15} />
+                      No panel mutations
+                    </span>
+                    <span>
+                      <Check size={15} />
+                      No automatic background sync
+                    </span>
+                    <span>
+                      <Check size={15} />
+                      Existing website is untouched
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
           <footer>

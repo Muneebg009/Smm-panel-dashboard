@@ -2,7 +2,13 @@
 
 A separate, responsive Phase 1 admin dashboard built with Next.js App Router, TypeScript, Tailwind CSS v4, shadcn/ui-style source components (Radix Dialog and Slot), Lucide and Recharts. Dark navy appearance is the default; use the sun button for light mode.
 
-**DEMO DATA ONLY.** All customers, providers, orders, reliability figures, expenses, revenue and profit are fabricated. There are no live APIs, API keys, order creation, payments, provider tests or changes to paksmartpanel.com. This app has no authentication and must not be used with sensitive production information.
+**DEMO DATA ONLY.** All customers, providers, orders, reliability figures, expenses, revenue and profit are fabricated. No live API operations, order creation, payments, provider tests or changes to paksmartpanel.com are enabled. Optional Admin API credentials belong only in secure server environment settings. This app has no authentication and must not be used with sensitive production information.
+
+## Phase 2 integration status
+
+The original demo UI is preserved. Settings and Dashboard now include a read-only integration capability report, configuration check, connection-test control, and manual Refresh Data control. Official documentation access is blocked by the cloud network policy, so the verified endpoint registry is empty and **no live calls are enabled**. All business figures remain DEMO DATA. The production Admin API base, response schemas, mapping and pagination remain unverified.
+
+See [Perfect Panel integration report](docs/perfect-panel-integration.md) for supported/unavailable fields, security constraints, mocked test coverage, Android configuration steps, and how to test without changing the live panel. Do not enable a credential-backed live data route on this public app until administrator authentication and a panel-wide limiter are implemented.
 
 ## Run and preview
 
@@ -63,4 +69,4 @@ Order rates are historical snapshots so later catalog rate changes will not chan
 - `src/lib/data.ts`: typed mock data and financial calculations.
 - `tests/finance.test.ts`: meaningful financial recognition and date-boundary tests.
 
-This deliverable stops at Phase 1. No real earnings are represented and no Phase 2 integrations are implemented.
+The Phase 2 connection foundation is present but live integration is blocked pending documentation and access verification. No real earnings are represented. Phase 3 is not implemented.
