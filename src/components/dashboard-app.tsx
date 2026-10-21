@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { AnalyticsWorkspace } from "@/components/analytics-workspace";
+import { FinancialWorkspace } from "@/components/financial-workspace";
 import { PerfectPanelIntegration } from "@/components/perfect-panel-integration";
 import { useMemo, useState } from "react";
 import {
@@ -18,7 +20,6 @@ import {
   ChevronRight,
   ArrowUpRight,
   Download,
-  Search,
   Moon,
   Sun,
   Menu,
@@ -27,7 +28,6 @@ import {
   ArrowRight,
   CircleHelp,
   Check,
-  Plus,
   Bell,
   TrendingUp,
   DollarSign,
@@ -69,7 +69,6 @@ import {
   profit,
   rangeOrders,
   type Order,
-  type Expense,
 } from "@/lib/data";
 
 const icons = [
@@ -368,47 +367,22 @@ export function DashboardApp({ section }: { section: string }) {
   const [period, setPeriod] = useState("30 days");
   const [start, setStart] = useState("2026-09-22");
   const [end, setEnd] = useState(DEMO_TODAY);
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("All statuses");
-  const [platform, setPlatform] = useState("All platforms");
   const [selected, setSelected] = useState<Order | null>(null);
-  const [page, setPage] = useState(1);
   const [notice, setNotice] = useState("");
-  const [expenseOpen, setExpenseOpen] = useState(false);
-  const [expenses, setExpenses] = useState<Expense[]>(demo.expenses);
-  const [expenseName, setExpenseName] = useState("");
-  const [expenseAmount, setExpenseAmount] = useState("");
-  const [expenseCategory, setExpenseCategory] = useState("Software");
   const [business, setBusiness] = useState("PakSmartPanel");
   const [notify, setNotify] = useState(true);
   const rows = useMemo(() => rangeOrders(start, end), [start, end]);
   const totals = summarize(rows);
   const today = summarize(rangeOrders(DEMO_TODAY, DEMO_TODAY));
   const month = summarize(rangeOrders("2026-10-01", DEMO_TODAY));
-  const filtered = rows.filter(
-    (o) =>
-      (status === "All statuses" || o.status === status) &&
-      `${o.id} ${o.customer} ${service(o.serviceId).name}`
-        .toLowerCase()
-        .includes(query.toLowerCase()),
-  );
-  const serviceRows = demo.services
-    .map((s) => {
-      const orders = rows.filter((o) => o.serviceId === s.id);
-      return { ...s, ...summarize(orders) };
-    })
-    .filter(
-      (s) =>
-        (platform === "All platforms" || s.platform === platform) &&
-        s.name.toLowerCase().includes(query.toLowerCase()),
-    );
+  const filtered = rows;
+  const serviceRows = demo.services.map((s) => {
+    const orders = rows.filter((o) => o.serviceId === s.id);
+    return { ...s, ...summarize(orders) };
+  });
   const top = [...serviceRows].sort((a, b) => b.profit - a.profit);
-  const expenseTotal = expenses
-    .filter((e) => e.date >= start && e.date <= end)
-    .reduce((s, e) => s + e.amount, 0);
   function changePeriod(value: string) {
     setPeriod(value);
-    setPage(1);
     if (value === "Today") {
       setStart(DEMO_TODAY);
       setEnd(DEMO_TODAY);
@@ -469,7 +443,6 @@ export function DashboardApp({ section }: { section: string }) {
             max={end}
             onChange={(e) => {
               setStart(e.target.value);
-              setPage(1);
             }}
           />
           <span>—</span>
@@ -480,7 +453,6 @@ export function DashboardApp({ section }: { section: string }) {
             min={start}
             onChange={(e) => {
               setEnd(e.target.value);
-              setPage(1);
             }}
           />
         </div>
@@ -491,20 +463,6 @@ export function DashboardApp({ section }: { section: string }) {
         </span>
       )}
     </div>
-  );
-  const search = (placeholder: string) => (
-    <label className="search-field">
-      <Search size={16} />
-      <input
-        value={query}
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setPage(1);
-        }}
-        placeholder={placeholder}
-        aria-label={placeholder}
-      />
-    </label>
   );
   const statusChart = ["Completed", "Processing", "Pending", "Canceled"].map(
     (name, i) => ({
@@ -639,13 +597,13 @@ export function DashboardApp({ section }: { section: string }) {
         </header>
         <main>
           <div className="demo-banner">
-            <span className="demo-tag">DEMO DATA</span>
+            <span className="demo-tag">DATA SOURCES</span>
             <span>
-              You’re exploring a demo workspace. All orders, revenue, and
-              profits are simulated.
+              Live panel financials are unavailable. DEMO DATA stays separate
+              from authenticated manual expenses.
             </span>
             <span className="phase-tag">
-              Phase 2 <span>•</span> Live data unavailable
+              Phase 4 <span>•</span> Live panel financials unavailable
             </span>
           </div>
           <div className="page-heading">
@@ -665,15 +623,34 @@ export function DashboardApp({ section }: { section: string }) {
                       : `Explore and manage your demo ${section.toLowerCase()}.`}
               </p>
             </div>
-            <Button variant="outline" onClick={exportOrders}>
-              <Download size={16} />
-              Export demo data
-            </Button>
+            {![
+              "Profit & Loss",
+              "Reports",
+              "Expenses",
+              "Orders",
+              "Services",
+              "Top Services",
+              "Providers",
+            ].includes(section) && (
+              <Button variant="outline" onClick={exportOrders}>
+                <Download size={16} />
+                Export demo data
+              </Button>
+            )}
           </div>
           {["Dashboard", "Settings"].includes(section) && (
             <PerfectPanelIntegration />
           )}
-          {section !== "Settings" && filters}
+          {![
+            "Settings",
+            "Profit & Loss",
+            "Reports",
+            "Expenses",
+            "Orders",
+            "Services",
+            "Top Services",
+            "Providers",
+          ].includes(section) && filters}
           {notice && (
             <div className="notice" role="status">
               <Check size={16} />
@@ -685,6 +662,12 @@ export function DashboardApp({ section }: { section: string }) {
               >
                 <X size={15} />
               </button>
+            </div>
+          )}
+          {section === "Dashboard" && <FinancialWorkspace view="dashboard" />}
+          {section === "Dashboard" && (
+            <div className="finance-title">
+              <h2>Original dashboard · DEMO DATA only</h2>
             </div>
           )}
           {section === "Dashboard" && (
@@ -916,528 +899,15 @@ export function DashboardApp({ section }: { section: string }) {
               </Card>
             </>
           )}
-          {section === "Orders" && (
-            <Card>
-              <CardHeader>
-                <div>
-                  <CardTitle>
-                    All demo orders{" "}
-                    <span className="count">{filtered.length}</span>
-                  </CardTitle>
-                  <p>Inspect order details without sending any requests</p>
-                </div>
-              </CardHeader>
-              <div className="table-toolbar">
-                {search("Search order, customer or service…")}
-                <select
-                  aria-label="Order status"
-                  value={status}
-                  onChange={(e) => {
-                    setStatus(e.target.value);
-                    setPage(1);
-                  }}
-                >
-                  {[
-                    "All statuses",
-                    "Completed",
-                    "Processing",
-                    "Pending",
-                    "Canceled",
-                  ].map((s) => (
-                    <option key={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-              <OrderTable
-                rows={filtered.slice((page - 1) * 10, page * 10)}
-                onSelect={setSelected}
-              />
-              <div className="pagination">
-                <span>
-                  {filtered.length
-                    ? `${(page - 1) * 10 + 1}–${Math.min(page * 10, filtered.length)}`
-                    : "0"}{" "}
-                  of {filtered.length} demo orders
-                </span>
-                <div>
-                  <Button
-                    variant="outline"
-                    disabled={page === 1}
-                    onClick={() => setPage(page - 1)}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    disabled={page * 10 >= filtered.length}
-                    onClick={() => setPage(page + 1)}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          )}
-          {(section === "Services" || section === "Top Services") && (
-            <>
-              <div className="stats-grid three">
-                <Stat
-                  label="Demo services"
-                  value={String(demo.services.length)}
-                  icon={Layers}
-                />
-                <Stat
-                  label="Gross profit · selected period"
-                  value={money(totals.profit)}
-                  icon={TrendingUp}
-                />
-                <Stat
-                  label="Weighted profit margin"
-                  value={`${totals.margin.toFixed(1)}%`}
-                  icon={ChartNoAxesCombined}
-                />
-              </div>
-              <Card>
-                <CardHeader>
-                  <div>
-                    <CardTitle>
-                      {section === "Top Services"
-                        ? "Service profitability ranking"
-                        : "Service catalog"}
-                    </CardTitle>
-                    <p>
-                      Rates in PKR per 1,000 units • imported service examples
-                      only
-                    </p>
-                  </div>
-                </CardHeader>
-                <div className="table-toolbar">
-                  {search("Search demo services…")}
-                  <select
-                    aria-label="Filter platform"
-                    value={platform}
-                    onChange={(e) => setPlatform(e.target.value)}
-                  >
-                    {[
-                      "All platforms",
-                      "Instagram",
-                      "YouTube",
-                      "TikTok",
-                      "Facebook",
-                    ].map((s) => (
-                      <option key={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="table-scroll">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Service</th>
-                        <th>Provider</th>
-                        <th>Sell / 1k</th>
-                        <th>Cost / 1k</th>
-                        <th>Unit margin</th>
-                        <th>Orders</th>
-                        <th>Gross profit</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(section === "Top Services" ? top : serviceRows).map(
-                        (s) => (
-                          <tr key={s.id}>
-                            <td>
-                              <div className="service-cell">
-                                <Platform name={s.platform} />
-                                <div>
-                                  {s.name}
-                                  <small>DEMO • {s.id.toUpperCase()}</small>
-                                </div>
-                              </div>
-                            </td>
-                            <td>{provider(s.providerId).name}</td>
-                            <td>{money(s.sellPer1000)}</td>
-                            <td>{money(s.costPer1000)}</td>
-                            <td>
-                              <Badge tone="completed">
-                                {(
-                                  ((s.sellPer1000 - s.costPer1000) /
-                                    s.sellPer1000) *
-                                  100
-                                ).toFixed(1)}
-                                %
-                              </Badge>
-                            </td>
-                            <td>{s.total}</td>
-                            <td className="positive">{money(s.profit)}</td>
-                          </tr>
-                        ),
-                      )}
-                    </tbody>
-                  </table>
-                  {!serviceRows.length && (
-                    <div className="empty">
-                      No demo services match your search.
-                    </div>
-                  )}
-                </div>
-              </Card>
-            </>
-          )}
+          {section === "Orders" && <AnalyticsWorkspace view="orders" />}
+          {section === "Services" && <AnalyticsWorkspace view="services" />}
+          {section === "Top Services" && <AnalyticsWorkspace view="rankings" />}
           {section === "Profit & Loss" && (
-            <>
-              <div className="stats-grid">
-                <Stat
-                  label="Recognized revenue"
-                  value={money(totals.revenue)}
-                />
-                <Stat
-                  label="Provider costs"
-                  value={money(totals.cost)}
-                  icon={Server}
-                />
-                <Stat
-                  label="Gross profit"
-                  value={money(totals.profit)}
-                  icon={TrendingUp}
-                />
-                <Stat
-                  label="Net demo profit"
-                  value={money(totals.profit - expenseTotal)}
-                  accent
-                  icon={Wallet}
-                />
-              </div>
-              <Card>
-                <CardHeader>
-                  <div>
-                    <CardTitle>Revenue vs. provider costs</CardTitle>
-                    <p>Completed orders only • DEMO DATA</p>
-                  </div>
-                </CardHeader>
-                <Chart rows={rows} bar />
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Demo income statement</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {[
-                    ["Customer sales", totals.revenue],
-                    ["Less: provider costs", -totals.cost],
-                    ["Gross profit", totals.profit],
-                    ["Less: operating expenses", -expenseTotal],
-                    ["Net simulated profit", totals.profit - expenseTotal],
-                  ].map(([label, value]) => (
-                    <div className="statement-row" key={label}>
-                      <span>{label}</span>
-                      <strong>{money(Number(value))}</strong>
-                    </div>
-                  ))}
-                  <p className="muted fine-print">
-                    Accrual-style demo: revenue and provider cost recognized on
-                    completion. Taxes, refunds, exchange rates, and payment fees
-                    are outside Phase 1.
-                  </p>
-                </CardContent>
-              </Card>
-            </>
+            <FinancialWorkspace view="dashboard" />
           )}
-          {section === "Providers" && (
-            <>
-              <div className="provider-grid">
-                {demo.providers
-                  .filter((p) =>
-                    p.name.toLowerCase().includes(query.toLowerCase()),
-                  )
-                  .map((p, i) => {
-                    const ids = demo.services
-                      .filter((s) => s.providerId === p.id)
-                      .map((s) => s.id);
-                    const total = summarize(
-                      rows.filter((o) => ids.includes(o.serviceId)),
-                    );
-                    return (
-                      <Card key={p.id} className="provider-card">
-                        <div className="provider-title">
-                          <span className={`provider-avatar provider-${i}`}>
-                            {p.name.slice(0, 2)}
-                          </span>
-                          <Badge tone="purple">Demo provider</Badge>
-                        </div>
-                        <h2>{p.name}</h2>
-                        <p>
-                          {p.region} • {ids.length} demo services
-                        </p>
-                        <div className="financial-row">
-                          <span>Provider spending</span>
-                          <strong>{money(total.cost)}</strong>
-                        </div>
-                        <div className="financial-row">
-                          <span>Gross profit</span>
-                          <strong className="positive">
-                            {money(total.profit)}
-                          </strong>
-                        </div>
-                        <div className="financial-row">
-                          <span>Sample reliability</span>
-                          <strong>{p.reliability}%</strong>
-                        </div>
-                        <div className="margin-track">
-                          <span
-                            style={{
-                              width: `${p.reliability}%`,
-                              background: colors[i],
-                            }}
-                          />
-                        </div>
-                        <small className="muted">
-                          Not connected • No balance or live status available
-                        </small>
-                      </Card>
-                    );
-                  })}
-              </div>
-              <Card>
-                <CardHeader>
-                  <div>
-                    <CardTitle>Provider comparison</CardTitle>
-                    <p>Simulated costs and profit contribution</p>
-                  </div>
-                  {search("Search providers…")}
-                </CardHeader>
-                <div className="comparison-chart">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={demo.providers.map((p) => ({
-                        name: p.name,
-                        ...summarize(
-                          rows.filter(
-                            (o) => service(o.serviceId).providerId === p.id,
-                          ),
-                        ),
-                      }))}
-                    >
-                      <CartesianGrid vertical={false} stroke="var(--border)" />
-                      <XAxis
-                        dataKey="name"
-                        tick={{ fill: "var(--muted)", fontSize: 11 }}
-                      />
-                      <YAxis
-                        tickFormatter={(n) => `${n / 1000}k`}
-                        tick={{ fill: "var(--muted)", fontSize: 11 }}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          background: "var(--card)",
-                          border: "1px solid var(--border)",
-                        }}
-                        formatter={(v) => money(Number(v))}
-                      />
-                      <Legend />
-                      <Bar
-                        isAnimationActive={false}
-                        name="Provider spending"
-                        dataKey="cost"
-                        fill="#7866ff"
-                        radius={[5, 5, 0, 0]}
-                      />
-                      <Bar
-                        isAnimationActive={false}
-                        name="Gross profit"
-                        dataKey="profit"
-                        fill="#37c9a0"
-                        radius={[5, 5, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card>
-            </>
-          )}
-          {section === "Reports" && (
-            <>
-              <div className="report-intro">
-                <span className="report-icon">
-                  <FileChartColumn size={30} />
-                </span>
-                <div>
-                  <h2>Your numbers, ready to share.</h2>
-                  <p>
-                    Export clearly labeled demo reports for the selected date
-                    range.
-                  </p>
-                </div>
-              </div>
-              <div className="report-grid">
-                {[
-                  {
-                    title: "Order activity",
-                    description:
-                      "Detailed orders, statuses, revenue and provider costs.",
-                    action: exportOrders,
-                  },
-                  {
-                    title: "Service profitability",
-                    description:
-                      "Compare unit prices, margins and gross profit by service.",
-                    action: () =>
-                      downloadCSV("services", [
-                        [
-                          "Service",
-                          "Orders",
-                          "Revenue PKR",
-                          "Cost PKR",
-                          "Gross profit PKR",
-                          "Margin %",
-                        ],
-                        ...top.map((s) => [
-                          s.name,
-                          s.total,
-                          s.revenue,
-                          s.cost,
-                          s.profit,
-                          s.margin.toFixed(2),
-                        ]),
-                      ]),
-                  },
-                  {
-                    title: "Financial summary",
-                    description:
-                      "Recognized sales, provider spending and operating expenses.",
-                    action: () =>
-                      downloadCSV("financial-summary", [
-                        [
-                          "Start",
-                          "End",
-                          "Revenue PKR",
-                          "Provider costs PKR",
-                          "Expenses PKR",
-                          "Net demo profit PKR",
-                        ],
-                        [
-                          start,
-                          end,
-                          totals.revenue,
-                          totals.cost,
-                          expenseTotal,
-                          totals.profit - expenseTotal,
-                        ],
-                      ]),
-                  },
-                ].map((r) => (
-                  <Card key={r.title} className="report-card">
-                    <FileChartColumn className="purple-text" />
-                    <h2>{r.title}</h2>
-                    <p>{r.description}</p>
-                    <Badge tone="purple">DEMO DATA · CSV</Badge>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        r.action();
-                        setNotice("Demo report exported successfully.");
-                      }}
-                    >
-                      <Download size={15} />
-                      Download report
-                    </Button>
-                  </Card>
-                ))}
-              </div>
-              <Card>
-                <CardHeader>
-                  <div>
-                    <CardTitle>Financial trend</CardTitle>
-                    <p>Preview of the selected demo reporting period</p>
-                  </div>
-                </CardHeader>
-                <Chart rows={rows} />
-              </Card>
-            </>
-          )}
-          {section === "Expenses" && (
-            <>
-              <div className="stats-grid three">
-                <Stat
-                  label="Operating expenses · selected period"
-                  value={money(expenseTotal)}
-                  icon={Wallet}
-                />
-                <Stat
-                  label="Demo entries · all dates"
-                  value={String(expenses.length)}
-                  icon={FileChartColumn}
-                />
-                <Stat
-                  label="Net demo profit · selected period"
-                  value={money(totals.profit - expenseTotal)}
-                  icon={TrendingUp}
-                />
-              </div>
-              <Card>
-                <CardHeader>
-                  <div>
-                    <CardTitle>Expense ledger</CardTitle>
-                    <p>Local demo entries reset when you reload this page</p>
-                  </div>
-                  <Button onClick={() => setExpenseOpen(true)}>
-                    <Plus size={16} />
-                    Add demo expense
-                  </Button>
-                </CardHeader>
-                <div className="table-toolbar">
-                  {search("Search expenses…")}
-                </div>
-                <div className="table-scroll">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Expense</th>
-                        <th>Category</th>
-                        <th>Date</th>
-                        <th>Amount</th>
-                        <th>Source</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {expenses
-                        .filter(
-                          (e) =>
-                            e.date >= start &&
-                            e.date <= end &&
-                            `${e.name} ${e.category}`
-                              .toLowerCase()
-                              .includes(query.toLowerCase()),
-                        )
-                        .map((e) => (
-                          <tr key={e.id}>
-                            <td>{e.name}</td>
-                            <td>{e.category}</td>
-                            <td>{e.date}</td>
-                            <td>{money(e.amount)}</td>
-                            <td>
-                              <Badge tone="purple">DEMO DATA</Badge>
-                            </td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                  {!expenses.some(
-                    (e) =>
-                      e.date >= start &&
-                      e.date <= end &&
-                      `${e.name} ${e.category}`
-                        .toLowerCase()
-                        .includes(query.toLowerCase()),
-                  ) && (
-                    <div className="empty">
-                      No demo expenses match these filters.
-                    </div>
-                  )}
-                </div>
-              </Card>
-            </>
-          )}
+          {section === "Providers" && <AnalyticsWorkspace view="providers" />}
+          {section === "Reports" && <FinancialWorkspace view="reports" />}
+          {section === "Expenses" && <FinancialWorkspace view="expenses" />}
           {section === "Settings" && (
             <div className="settings-grid">
               <Card>
@@ -1604,79 +1074,6 @@ export function DashboardApp({ section }: { section: string }) {
               </p>
             </>
           )}
-        </DialogContent>
-      </Dialog>
-      <Dialog open={expenseOpen} onOpenChange={setExpenseOpen}>
-        <DialogContent>
-          <DialogTitle>Add demo expense</DialogTitle>
-          <DialogDescription>
-            Creates a temporary local demo entry. No money is spent.
-          </DialogDescription>
-          <form
-            className="settings-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (
-                !expenseName.trim() ||
-                !Number.isFinite(Number(expenseAmount)) ||
-                Number(expenseAmount) <= 0
-              )
-                return;
-              setExpenses([
-                ...expenses,
-                {
-                  id: `local-${Date.now()}`,
-                  name: expenseName.trim(),
-                  category: expenseCategory,
-                  amount: Number(expenseAmount),
-                  date: DEMO_TODAY,
-                },
-              ]);
-              setExpenseOpen(false);
-              setExpenseName("");
-              setExpenseAmount("");
-              setNotice("Demo expense added locally. It will reset on reload.");
-            }}
-          >
-            <label>
-              Description
-              <input
-                required
-                maxLength={80}
-                value={expenseName}
-                onChange={(e) => setExpenseName(e.target.value)}
-              />
-            </label>
-            <label>
-              Amount (PKR)
-              <input
-                required
-                type="number"
-                min="0.01"
-                max="10000000"
-                step="0.01"
-                value={expenseAmount}
-                onChange={(e) => setExpenseAmount(e.target.value)}
-              />
-            </label>
-            <label>
-              Category
-              <select
-                value={expenseCategory}
-                onChange={(e) => setExpenseCategory(e.target.value)}
-              >
-                {["Software", "Infrastructure", "Marketing", "Other"].map(
-                  (c) => (
-                    <option key={c}>{c}</option>
-                  ),
-                )}
-              </select>
-            </label>
-            <Button type="submit">
-              <Plus size={16} />
-              Add demo expense
-            </Button>
-          </form>
         </DialogContent>
       </Dialog>
     </div>
